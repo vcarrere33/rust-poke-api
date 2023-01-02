@@ -1,6 +1,8 @@
 mod hello;
+mod pokedex;
 struct Pokemon;
 use actix_web::{web, App, HttpServer};
+use dotenv::dotenv;
 use mongodb::{bson::doc, options::IndexOptions, Client, IndexModel};
 
 const DB_NAME: &str = "myApp";
@@ -22,6 +24,7 @@ async fn create_username_index(client: &Client) {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    dotenv().ok();
     let uri = std::env::var("MONGODB_URI").unwrap_or_else(|_| "mongodb://localhost:27017".into());
 
     let client = Client::with_uri_str(uri).await.expect("failed to connect");
@@ -31,7 +34,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .app_data(web::Data::new(client.clone()))
             .service(hello::hello)
-            .route("/hey", web::get().to(hello::manual_hello))
+            .service(pokedex::list)
     })
     .bind(("127.0.0.1", 8080))?
     .run()
